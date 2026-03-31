@@ -82,6 +82,10 @@ textarea{resize:vertical;min-height:72px}
     <input type="password" id="l-pass" placeholder="รหัสผ่าน" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn primary" style="width:100%;margin-top:4px" onclick="doLogin()">เข้าสู่ระบบ</button>
     <div class="err-msg" id="l-err"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee">
+      <div style="font-size:12px;color:#aaa;margin-bottom:10px">พนักงาน / ลูกน้อง</div>
+      <button class="btn" style="width:100%;font-size:13px" onclick="enterAsEmployee()">เข้าดู Feedback ของฉัน (ไม่ต้อง Login)</button>
+    </div>
   </div>
 </div>
 
@@ -172,7 +176,7 @@ textarea{resize:vertical;min-height:72px}
 
 <script>
 // ⚠️ แก้ URL นี้เป็น Web App URL ของคุณ หลังจาก Deploy ใน Apps Script
-var API = "https://script.google.com/macros/s/AKfycbxw-cdMKqhCEBjQE5VIEtwy_phTENyEahsek3PNi1m7aMmD0ctcaDbNkehHOVz3X8-bNg/exec";
+var API = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
 var session = null;
 var pendingActions = [];
@@ -189,6 +193,11 @@ function api(params, cb) {
 }
 
 // ---- LOGIN ----
+function enterAsEmployee() {
+  session = {role:"employee", name:"พนักงาน", managerId:"__employee__"};
+  showApp();
+}
+
 function doLogin() {
   var u = document.getElementById("l-user").value.trim();
   var p = document.getElementById("l-pass").value.trim();
@@ -217,16 +226,16 @@ function doLogout(){
 function showApp(){
   document.getElementById("login-screen").style.display="none";
   document.getElementById("main-app").style.display="block";
-  document.getElementById("user-label").textContent = session.name;
-  document.getElementById("user-badge").textContent =
-    session.role==="director"?"หัวหน้าสายงาน":
-    session.role==="manager"?"หัวหน้างาน":"พนักงาน";
+
+  var roleLabel = session.role==="director"?"หัวหน้าสายงาน":session.role==="manager"?"หัวหน้างาน":"พนักงาน";
+  document.getElementById("user-label").textContent = session.role==="employee" ? "" : session.name;
+  document.getElementById("user-badge").textContent = roleLabel;
 
   var tabs = "";
   if(session.role==="manager"||session.role==="director"){
     tabs += '<button class="tab active" onclick="switchTab(\'manager\',this)">หัวหน้างาน (สร้าง Feedback)</button>';
   }
-  tabs += '<button class="tab'+(session.role==="manager"?" ":" active")+'" onclick="switchTab(\'team\',this)">ลูกน้อง (รับ Feedback)</button>';
+  tabs += '<button class="tab'+(session.role==="employee"?" active":(session.role==="manager"?" ":""))+'" onclick="switchTab(\'team\',this)">พนักงาน (รับ Feedback)</button>';
   if(session.role==="director"){
     tabs += '<button class="tab" onclick="switchTab(\'director\',this)">หัวหน้าสายงาน (Dashboard)</button>';
   }
