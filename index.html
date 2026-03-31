@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Feedback Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun','Segoe UI',sans-serif;background:#F8F7F5;color:#1a1a1a;font-size:15px}
+.header{background:#fff;border-bottom:1px solid #e5e3db;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:32px;height:32px;border-radius:8px;background:#534AB7;display:flex;align-items:center;justify-content:center}
+.header h1{font-size:16px;font-weight:600}
+.header .sub{font-size:12px;color:#888}
+.user-info{font-size:13px;color:#666;display:flex;align-items:center;gap:10px}
+.tab-bar{display:flex;background:#fff;border-bottom:1px solid #e5e3db;padding:0 24px}
+.tab{padding:12px 20px;font-size:13px;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;font-family:inherit}
+.tab.active{color:#534AB7;border-bottom-color:#534AB7;font-weight:600}
+.container{max-width:960px;margin:0 auto;padding:24px}
+.card{background:#fff;border:1px solid #e5e3db;border-radius:12px;padding:20px;margin-bottom:16px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:16px}
+.form-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.form-row label{font-size:13px;color:#666;min-width:120px;padding-top:8px;flex-shrink:0}
+.form-row .field{flex:1}
+input[type=text],select,textarea{width:100%;font-size:13px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none}
+input[type=text]:focus,select:focus,textarea:focus{border-color:#534AB7}
+textarea{resize:vertical;min-height:72px}
+.btn{padding:8px 18px;font-size:13px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit}
+.btn:hover{background:#f5f4f2}
+.btn.primary{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn.primary:hover{background:#3C3489}
+.btn.success{background:#0F6E56;color:#fff;border-color:#0F6E56}
+.btn.sm{padding:5px 12px;font-size:12px}
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:99px;font-weight:500}
+.badge.pending{background:#FAEEDA;color:#854F0B}
+.badge.read{background:#E6F1FB;color:#185FA5}
+.badge.done{background:#EAF3DE;color:#3B6D11}
+.badge.urgent{background:#FCEBEB;color:#A32D2D}
+.badge.normal{background:#F1EFE8;color:#5F5E5A}
+.item-row{padding:14px 0;border-bottom:1px solid #f0eeea}
+.item-row:last-child{border-bottom:none}
+.prog-bar{height:6px;border-radius:3px;background:#F1EFE8;overflow:hidden;width:180px}
+.prog-fill{height:100%;border-radius:3px;background:#534AB7}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{background:#fff;border:1px solid #e5e3db;border-radius:10px;padding:16px;text-align:center}
+.metric .num{font-size:26px;font-weight:600;color:#534AB7}
+.metric .lbl{font-size:12px;color:#888;margin-top:4px}
+.note-box{background:#F8F7F5;border-radius:8px;padding:10px 14px;font-size:13px;color:#555;margin-top:8px;border-left:3px solid #534AB7}
+.action-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f5f4f2}
+.action-item:last-child{border-bottom:none}
+.action-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#534AB7}
+.action-item .note-input{font-size:12px;padding:4px 8px;width:160px;border-radius:6px}
+.empty{text-align:center;padding:3rem 0;color:#aaa;font-size:14px}
+.section{display:none}
+.section.active{display:block}
+.flex-row{display:flex;gap:8px;align-items:center}
+.tag{font-size:11px;color:#999}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:#534AB7;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F8F7F5}
+.login-card{background:#fff;border:1px solid #e5e3db;border-radius:16px;padding:40px 36px;width:360px;text-align:center}
+.login-card .logo-big{width:52px;height:52px;border-radius:12px;background:#534AB7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.login-card h2{font-size:18px;font-weight:600;margin-bottom:4px}
+.login-card .sub{font-size:13px;color:#888;margin-bottom:24px}
+.login-card input{margin-bottom:12px;text-align:left}
+.err-msg{font-size:13px;color:#A32D2D;margin-top:8px;min-height:18px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo-big">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="3" y="3" width="20" height="4" rx="2" fill="#fff"/><rect x="3" y="11" width="20" height="4" rx="2" fill="#fff" opacity=".7"/><rect x="3" y="19" width="13" height="4" rx="2" fill="#fff" opacity=".4"/></svg>
+    </div>
+    <h2>Ops Feedback Tracker</h2>
+    <p class="sub">ระบบติดตาม Feedback งานปฏิบัติการ</p>
+    <input type="text" id="l-user" placeholder="ชื่อผู้ใช้ (username)">
+    <input type="password" id="l-pass" placeholder="รหัสผ่าน" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn primary" style="width:100%;margin-top:4px" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="err-msg" id="l-err"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="3" rx="1.5" fill="#fff"/><rect x="2" y="7.5" width="14" height="3" rx="1.5" fill="#fff" opacity=".7"/><rect x="2" y="13" width="9" height="3" rx="1.5" fill="#fff" opacity=".4"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:600">Ops Feedback Tracker</div>
+        <div class="sub" id="user-badge"></div>
+      </div>
+    </div>
+    <div class="user-info">
+      <span id="user-label"></span>
+      <button class="btn sm" onclick="doLogout()">ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="tab-bar"></div>
+
+  <div class="container">
+    <!-- MANAGER -->
+    <div id="tab-manager" class="section">
+      <div class="card">
+        <h3>สร้าง Feedback ใหม่</h3>
+        <div class="form-row"><label>ชื่อพนักงาน</label><div class="field"><input type="text" id="m-name" placeholder="ชื่อ-นามสกุลพนักงาน"></div></div>
+        <div class="form-row"><label>แผนก / ทีม</label><div class="field"><input type="text" id="m-dept" placeholder="เช่น ทีม A, Shift เช้า"></div></div>
+        <div class="form-row"><label>หัวข้อ</label><div class="field"><input type="text" id="m-topic" placeholder="เช่น การตอบสนองลูกค้า"></div></div>
+        <div class="form-row"><label>ระดับความสำคัญ</label><div class="field"><select id="m-priority"><option value="normal">ปกติ</option><option value="urgent">ด่วน</option></select></div></div>
+        <div class="form-row"><label>รายละเอียด</label><div class="field"><textarea id="m-feedback" placeholder="อธิบายจุดที่ต้องปรับปรุง..."></textarea></div></div>
+        <div style="margin-bottom:16px">
+          <div style="font-size:13px;color:#666;margin-bottom:8px;font-weight:500">Action Items</div>
+          <div id="m-actions-list"></div>
+          <div class="flex-row" style="margin-top:8px">
+            <input type="text" id="m-action-input" placeholder="เพิ่ม action item..." style="flex:1" onkeydown="if(event.key==='Enter')addAction()">
+            <button class="btn" onclick="addAction()">+ เพิ่ม</button>
+          </div>
+        </div>
+        <div class="flex-row">
+          <button class="btn primary" onclick="saveFeedback()" id="save-btn">บันทึก Feedback</button>
+          <button class="btn" onclick="clearForm()">ล้างฟอร์ม</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Feedback ที่ฉันสร้างไว้</h3>
+        <div id="manager-list"><div class="empty"><span class="spinner"></span></div></div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div id="tab-team" class="section">
+      <div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#185FA5">
+        กรอกชื่อพนักงานเพื่อดู Feedback ที่ได้รับ — ระบบจะบันทึกว่า "รับทราบแล้ว" ทันทีที่เปิดดู
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="flex-row">
+          <input type="text" id="t-empname" placeholder="ชื่อ-นามสกุลพนักงาน" style="flex:1">
+          <button class="btn primary" onclick="loadTeamFeedback()">ค้นหา Feedback</button>
+        </div>
+      </div>
+      <div id="team-list"></div>
+    </div>
+
+    <!-- DIRECTOR -->
+    <div id="tab-director" class="section">
+      <div class="metric-grid" id="dir-metrics"><div class="empty" style="grid-column:1/-1"><span class="spinner"></span></div></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3 style="margin:0">ภาพรวมทุกเคส</h3>
+          <div class="flex-row">
+            <select id="dir-filter" onchange="loadDirector()" style="width:auto;font-size:13px;padding:6px 10px">
+              <option value="all">ทุกสถานะ</option>
+              <option value="pending">รอรับทราบ</option>
+              <option value="read">กำลังดำเนินการ</option>
+              <option value="done">เสร็จสิ้น</option>
+            </select>
+            <button class="btn sm" onclick="loadDirector()">รีเฟรช</button>
+          </div>
+        </div>
+        <div id="dir-list"><div class="empty"><span class="spinner"></span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ⚠️ แก้ URL นี้เป็น Web App URL ของคุณ หลังจาก Deploy ใน Apps Script
+var API = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxhR5GC7esCfEhNJ-0m4O0dhdBSxYco-pWY1L8V0aVwO03O7ceLXtg3fhkXy5HwoLb9lA/exec"/exec";
+
+var session = null;
+var pendingActions = [];
+
+// ---- API ----
+function api(params, cb) {
+  var url = API + "?" + Object.keys(params).map(function(k){
+    return encodeURIComponent(k)+"="+encodeURIComponent(params[k])
+  }).join("&");
+  fetch(url)
+    .then(function(r){return r.json()})
+    .then(cb)
+    .catch(function(e){cb({ok:false,error:e.toString()})});
+}
+
+// ---- LOGIN ----
+function doLogin() {
+  var u = document.getElementById("l-user").value.trim();
+  var p = document.getElementById("l-pass").value.trim();
+  if(!u||!p){setErr("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");return}
+  setErr("กำลังเข้าสู่ระบบ...");
+  api({action:"login",username:u,password:p}, function(res){
+    if(res.ok){
+      session = res;
+      showApp();
+    } else {
+      setErr(res.error || "เข้าสู่ระบบไม่สำเร็จ");
+    }
+  });
+}
+
+function setErr(msg){document.getElementById("l-err").textContent=msg}
+
+function doLogout(){
+  session=null;
+  document.getElementById("main-app").style.display="none";
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("l-pass").value="";
+  setErr("");
+}
+
+function showApp(){
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("main-app").style.display="block";
+  document.getElementById("user-label").textContent = session.name;
+  document.getElementById("user-badge").textContent =
+    session.role==="director"?"หัวหน้าสายงาน":
+    session.role==="manager"?"หัวหน้างาน":"พนักงาน";
+
+  var tabs = "";
+  if(session.role==="manager"||session.role==="director"){
+    tabs += '<button class="tab active" onclick="switchTab(\'manager\',this)">หัวหน้างาน (สร้าง Feedback)</button>';
+  }
+  tabs += '<button class="tab'+(session.role==="manager"?" ":" active")+'" onclick="switchTab(\'team\',this)">ลูกน้อง (รับ Feedback)</button>';
+  if(session.role==="director"){
+    tabs += '<button class="tab" onclick="switchTab(\'director\',this)">หัวหน้าสายงาน (Dashboard)</button>';
+  }
+  document.getElementById("tab-bar").innerHTML=tabs;
+
+  if(session.role==="manager") { showSection("manager"); loadManagerList(); }
+  else if(session.role==="director") { showSection("manager"); loadManagerList(); }
+  else showSection("team");
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll(".tab").forEach(function(b){b.classList.remove("active")});
+  btn.classList.add("active");
+  showSection(name);
+  if(name==="manager") loadManagerList();
+  if(name==="director") loadDirector();
+}
+
+function showSection(name){
+  document.querySelectorAll(".section").forEach(function(s){s.classList.remove("active")});
+  document.getElementById("tab-"+name).classList.add("active");
+}
+
+// ---- MANAGER ----
+var pendingActions=[];
+
+function addAction(){
+  var v=document.getElementById("m-action-input").value.trim();
+  if(!v)return;
+  pendingActions.push(v);
+  document.getElementById("m-action-input").value="";
+  renderPA();
+}
+
+function renderPA(){
+  var el=document.getElementById("m-actions-list");
+  el.innerHTML=pendingActions.map(function(a,i){
+    return '<div class="action-item"><input type="checkbox" disabled><span style="flex:1;font-size:13px">'+esc(a)+'</span><button class="btn sm" onclick="removePA('+i+')" style="color:#A32D2D;border-color:#f0eeea">ลบ</button></div>'
+  }).join("");
+}
+
+function removePA(i){pendingActions.splice(i,1);renderPA()}
+
+function saveFeedback(){
+  var name=document.getElementById("m-name").value.trim();
+  var topic=document.getElementById("m-topic").value.trim();
+  var fb=document.getElementById("m-feedback").value.trim();
+  if(!name||!topic||!fb){alert("กรุณากรอก: ชื่อพนักงาน, หัวข้อ, และรายละเอียด");return}
+  var btn=document.getElementById("save-btn");
+  btn.disabled=true;btn.textContent="กำลังบันทึก...";
+  api({
+    action:"saveFeedback",
+    managerId: session.managerId,
+    managerName: session.name,
+    empName: name,
+    dept: document.getElementById("m-dept").value.trim(),
+    topic: topic,
+    feedback: fb,
+    priority: document.getElementById("m-priority").value,
+    actions: JSON.stringify(pendingActions)
+  }, function(res){
+    btn.disabled=false;btn.textContent="บันทึก Feedback";
+    if(res.ok){clearForm();loadManagerList();alert("บันทึกสำเร็จ");}
+    else alert("เกิดข้อผิดพลาด: "+res.error);
+  });
+}
+
+function clearForm(){
+  ["m-name","m-dept","m-topic","m-feedback"].forEach(function(id){document.getElementById(id).value=""});
+  document.getElementById("m-priority").value="normal";
+  pendingActions=[];renderPA();
+}
+
+function loadManagerList(){
+  document.getElementById("manager-list").innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  api({action:"getFeedback",managerId:session.managerId}, function(res){
+    if(!res.ok){document.getElementById("manager-list").innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>';return}
+    renderManagerList(res.data);
+  });
+}
+
+function renderManagerList(data){
+  var el=document.getElementById("manager-list");
+  if(!data||!data.length){el.innerHTML='<div class="empty">ยังไม่มี Feedback</div>';return}
+  el.innerHTML=data.map(function(item){
+    var done=item.actions.filter(function(a){return a.done}).length;
+    var total=item.actions.length;
+    var pct=total?Math.round(done/total*100):0;
+    return '<div class="item-row"><div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1">'+
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">'+
+      '<span style="font-size:14px;font-weight:600">'+esc(item.empName)+'</span>'+
+      (item.dept?'<span class="tag">'+esc(item.dept)+'</span>':'')+
+      '<span class="badge '+(item.priority==="urgent"?"urgent":"normal")+'">'+(item.priority==="urgent"?"ด่วน":"ปกติ")+'</span>'+
+      '<span class="badge '+item.status+'">'+sLabel(item.status)+'</span></div>'+
+      '<div style="font-size:13px;color:#666;margin-bottom:6px">'+esc(item.topic)+' <span class="tag">· '+item.createdAt+'</span></div>'+
+      (total?'<div style="display:flex;align-items:center;gap:8px"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div><span style="font-size:12px;color:#888">'+done+'/'+total+' action ('+pct+'%)</span></div>':'')+
+      '<div class="note-box">'+esc(item.feedback)+'</div></div>'+
+      '<button class="btn sm" onclick="delFeedback(\''+item.id+'\')" style="color:#A32D2D;border-color:#f0eeea;flex-shrink:0">ลบ</button>'+
+      '</div></div>'
+  }).join("");
+}
+
+function delFeedback(id){
+  if(!confirm("ลบรายการนี้?"))return;
+  api({action:"deleteFeedback",id:id},function(res){
+    if(res.ok) loadManagerList();
+    else alert("ลบไม่สำเร็จ: "+res.error);
+  });
+}
+
+// ---- TEAM ----
+function loadTeamFeedback(){
+  var name=document.getElementById("t-empname").value.trim();
+  if(!name){alert("กรุณากรอกชื่อพนักงาน");return}
+  document.getElementById("team-list").innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  api({action:"getFeedback",managerId:"__all__"}, function(res){
+    // ดึงทั้งหมดแล้วกรองฝั่ง client ตามชื่อพนักงาน
+    // (ในระบบจริงควร filter ฝั่ง server ด้วย empName)
+    if(!res.ok){document.getElementById("team-list").innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>';return}
+    var items=(res.data||[]).filter(function(x){return x.empName===name});
+    if(!items.length){document.getElementById("team-list").innerHTML='<div class="empty">ไม่พบ Feedback สำหรับ "'+esc(name)+'"</div>';return}
+    // mark read
+    items.forEach(function(item){
+      if(item.status==="pending") api({action:"markRead",id:item.id},function(){});
+    });
+    renderTeamList(items, name);
+  });
+}
+
+function renderTeamList(items, empName){
+  document.getElementById("team-list").innerHTML=items.map(function(item){
+    var done=item.actions.filter(function(a){return a.done}).length;
+    var total=item.actions.length;
+    return '<div class="card" style="margin-bottom:12px">'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'+
+      '<span style="font-size:15px;font-weight:600">'+esc(item.topic)+'</span>'+
+      '<span class="badge '+(item.priority==="urgent"?"urgent":"normal")+'">'+(item.priority==="urgent"?"ด่วน":"ปกติ")+'</span>'+
+      '<span class="badge '+item.status+'">'+sLabel(item.status)+'</span>'+
+      (item.status!=="pending"?'<span style="font-size:12px;color:#0F6E56;font-weight:500">✓ รับทราบแล้ว</span>':'')+
+      '</div>'+
+      '<div style="font-size:12px;color:#888;margin-bottom:4px">จาก: '+esc(item.managerName)+' · '+item.createdAt+'</div>'+
+      '<div class="note-box">'+esc(item.feedback)+'</div>'+
+      (total?'<div style="margin-top:14px"><div style="font-size:13px;font-weight:500;margin-bottom:8px;color:#444">Action Items ('+done+'/'+total+')</div>'+
+      item.actions.map(function(a,i){
+        return '<div class="action-item">'+
+          '<input type="checkbox" '+(a.done?'checked':'')+' onchange="toggleAct(\''+item.id+'\','+i+',this,\''+empName+'\')">'+
+          '<span style="flex:1;font-size:13px;'+(a.done?'text-decoration:line-through;color:#aaa':'')+'">'+ esc(a.text)+'</span>'+
+          '<input type="text" class="note-input" placeholder="หมายเหตุ..." value="'+esc(a.note||'')+'" onblur="saveNote(\''+item.id+'\','+i+',this.value,\''+empName+'\')">'+
+          '</div>'
+      }).join('')+'</div>':'')+
+      (item.status!=="done"?'<div style="margin-top:12px"><button class="btn success" onclick="markAllDone(\''+item.id+'\',\''+empName+'\',this)">ยืนยันเสร็จสิ้นทั้งหมด</button></div>':
+      '<div style="margin-top:10px;font-size:13px;color:#0F6E56;font-weight:500">✓ เสร็จสิ้น '+(item.completedAt||'')+'</div>')+
+      '</div>'
+  }).join("");
+}
+
+function toggleAct(fbId,idx,cb,empName){
+  api({action:"updateAction",fbId:fbId,actionIdx:idx,done:cb.checked?"true":"false"},function(res){
+    if(res.ok) loadTeamFeedbackSilent(empName);
+  });
+}
+
+function saveNote(fbId,idx,val,empName){
+  api({action:"updateAction",fbId:fbId,actionIdx:idx,done:"",note:val},function(){});
+}
+
+function markAllDone(fbId,empName,btn){
+  btn.disabled=true;btn.textContent="กำลังบันทึก...";
+  api({action:"markAllDone",fbId:fbId},function(res){
+    if(res.ok) loadTeamFeedbackSilent(empName);
+    else{btn.disabled=false;btn.textContent="ยืนยันเสร็จสิ้นทั้งหมด";}
+  });
+}
+
+function loadTeamFeedbackSilent(empName){
+  api({action:"getFeedback",managerId:"__all__"},function(res){
+    if(!res.ok)return;
+    var items=(res.data||[]).filter(function(x){return x.empName===empName});
+    renderTeamList(items,empName);
+  });
+}
+
+// ---- DIRECTOR ----
+function loadDirector(){
+  document.getElementById("dir-list").innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  var f=document.getElementById("dir-filter").value;
+  api({action:"getAllFeedback",filterStatus:f},function(res){
+    if(!res.ok){document.getElementById("dir-list").innerHTML='<div class="empty">โหลดไม่สำเร็จ</div>';return}
+    renderDirector(res.data||[]);
+  });
+}
+
+function renderDirector(data){
+  var pending=data.filter(function(x){return x.status==="pending"}).length;
+  var read=data.filter(function(x){return x.status==="read"}).length;
+  var done=data.filter(function(x){return x.status==="done"}).length;
+  document.getElementById("dir-metrics").innerHTML=
+    '<div class="metric"><div class="num">'+data.length+'</div><div class="lbl">ทั้งหมด</div></div>'+
+    '<div class="metric"><div class="num" style="color:#854F0B">'+pending+'</div><div class="lbl">รอรับทราบ</div></div>'+
+    '<div class="metric"><div class="num" style="color:#185FA5">'+read+'</div><div class="lbl">กำลังดำเนินการ</div></div>'+
+    '<div class="metric"><div class="num" style="color:#3B6D11">'+done+'</div><div class="lbl">เสร็จสิ้น</div></div>';
+
+  var el=document.getElementById("dir-list");
+  if(!data.length){el.innerHTML='<div class="empty">ไม่มีข้อมูลในหมวดนี้</div>';return}
+  el.innerHTML=data.map(function(item){
+    var doneA=item.actions.filter(function(a){return a.done}).length;
+    var total=item.actions.length;
+    var pct=total?Math.round(doneA/total*100):0;
+    return '<div class="item-row"><div style="flex:1">'+
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">'+
+      '<span style="font-size:14px;font-weight:600">'+esc(item.empName)+'</span>'+
+      (item.dept?'<span class="tag">'+esc(item.dept)+'</span>':'')+
+      '<span class="tag">หัวหน้า: '+esc(item.managerName)+'</span>'+
+      '<span class="badge '+(item.priority==="urgent"?"urgent":"normal")+'">'+(item.priority==="urgent"?"ด่วน":"ปกติ")+'</span>'+
+      '<span class="badge '+item.status+'">'+sLabel(item.status)+'</span></div>'+
+      '<div style="font-size:13px;color:#666;margin-bottom:4px">'+esc(item.topic)+
+      ' <span class="tag">· สร้าง '+item.createdAt+(item.readAt?' · รับทราบ '+item.readAt:'')+(item.completedAt?' · เสร็จ '+item.completedAt:'')+'</span></div>'+
+      (total?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div><span style="font-size:12px;color:#888">'+doneA+'/'+total+' action ('+pct+'%)</span></div>':'')+
+      '<div class="note-box">'+esc(item.feedback)+'</div>'+
+      (item.actions.some(function(a){return a.note})?'<div style="margin-top:6px;font-size:12px;color:#666">หมายเหตุ: '+item.actions.filter(function(a){return a.note}).map(function(a){return esc(a.note)}).join(' / ')+'</div>':'')+
+      '</div></div>'
+  }).join("");
+}
+
+// ---- UTILS ----
+function sLabel(s){return s==="pending"?"รอรับทราบ":s==="read"?"กำลังดำเนินการ":"เสร็จสิ้น"}
+function esc(s){if(!s)return"";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+</script>
+</body>
+</html>
